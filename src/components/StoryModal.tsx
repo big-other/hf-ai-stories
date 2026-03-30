@@ -129,7 +129,7 @@ export default function StoryModal({ story, onClose }: Props) {
           </div>
 
           {/* Full story */}
-          <div className="font-serif text-xl sm:text-[22px] text-dark-warm leading-relaxed italic whitespace-pre-line">
+          <div className="font-sans text-[15px] sm:text-base text-dark-warm leading-[1.8] whitespace-pre-line">
             {story.text}
           </div>
 
