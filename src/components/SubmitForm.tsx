@@ -189,8 +189,9 @@ export default function SubmitForm({ onSubmitted }: Props) {
         <div className="bg-linen/60 border border-stone/40 rounded-lg p-4">
           <p className="text-sm text-dark-mid leading-relaxed mb-3">
             Your story will be{" "}
-            <strong className="text-dark-warm">shared publicly</strong> on our
-            community board. Do not include personal information you wouldn&apos;t
+            <strong className="text-dark-warm">shared publicly</strong>{" "}
+            on our community board. Do not include personal information you
+            wouldn&apos;t
             want others to see.
           </p>
           <label className="flex items-start gap-2.5 cursor-pointer group">

@@ -21,12 +21,6 @@ export default function Footer() {
             >
               humansfirst.com
             </a>
-            <a
-              href="https://humansfirst.com/ai-spending-data"
-              className="text-muted underline underline-offset-2 decoration-stone hover:decoration-dark-warm transition-colors duration-200"
-            >
-              AI Spending Data
-            </a>
           </nav>
         </div>
 

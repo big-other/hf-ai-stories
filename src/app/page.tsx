@@ -1,12 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import SubmitForm from "@/components/SubmitForm";
 import StoryBoard from "@/components/StoryBoard";
 
 export default function Home() {
-  const [refreshKey, setRefreshKey] = useState(0);
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 sm:py-16">
       {/* Hero */}
@@ -21,20 +17,12 @@ export default function Home() {
         <p className="text-sm text-muted mt-3">
           These stories are shared openly to build awareness and accountability.
         </p>
-      </section>
-
-      <div className="w-12 h-px bg-stone mx-auto mb-12" />
-
-      {/* Submit form */}
-      <section id="submit" className="max-w-xl mx-auto mb-16 scroll-mt-20">
-        <h2 className="font-serif text-2xl text-dark-warm mb-2 text-center">
+        <a
+          href="/submit"
+          className="inline-block mt-6 bg-dark-warm hover:bg-dark-mid text-paper font-medium rounded-lg px-6 py-3 text-sm transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+        >
           Share Your Story
-        </h2>
-        <p className="text-sm text-muted text-center mb-6">
-          Your experience matters. Stories can be anonymous and will be visible
-          to everyone after a brief review.
-        </p>
-        <SubmitForm onSubmitted={() => setRefreshKey((k) => k + 1)} />
+        </a>
       </section>
 
       <div className="w-12 h-px bg-stone mx-auto mb-12" />
@@ -47,7 +35,7 @@ export default function Home() {
         <p className="text-sm text-muted text-center mb-8">
           Join hundreds of people sharing their experiences publicly
         </p>
-        <StoryBoard refreshKey={refreshKey} />
+        <StoryBoard refreshKey={0} />
       </section>
     </div>
   );

@@ -28,13 +28,7 @@ export default function Header() {
             Home
           </a>
           <a
-            href="https://humansfirst.com/ai-spending-data"
-            className="text-sm text-muted hover:text-dark-warm transition-colors duration-200"
-          >
-            AI Spending Data
-          </a>
-          <a
-            href="#submit"
+            href="/submit"
             className="text-sm bg-dark-warm hover:bg-dark-mid text-paper font-medium rounded-lg px-4 py-2 transition-all duration-200 hover:shadow-md active:scale-[0.98]"
           >
             Share Your Story
@@ -75,13 +69,7 @@ export default function Header() {
               Home
             </a>
             <a
-              href="https://humansfirst.com/ai-spending-data"
-              className="text-sm text-muted hover:text-dark-warm transition-colors duration-200 py-1"
-            >
-              AI Spending Data
-            </a>
-            <a
-              href="#submit"
+              href="/submit"
               className="text-sm bg-dark-warm hover:bg-dark-mid text-paper font-medium rounded-lg px-4 py-2 text-center transition-all duration-200"
               onClick={() => setMenuOpen(false)}
             >

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createStory, getApprovedStories } from "@/lib/stories";
 import { CATEGORIES, Category, STORY_MAX_CHARS } from "@/lib/types";
+import { SAMPLE_STORIES } from "@/lib/sample-stories";
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 3;
@@ -26,12 +27,12 @@ function checkRateLimit(ip: string): boolean {
 export async function GET() {
   try {
     const stories = await getApprovedStories();
-    return NextResponse.json({ stories });
+    // Include sample stories so the board is populated before real submissions
+    const all = [...SAMPLE_STORIES, ...stories];
+    return NextResponse.json({ stories: all });
   } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch stories" },
-      { status: 500 }
-    );
+    // If Redis isn't configured, fall back to sample stories only
+    return NextResponse.json({ stories: SAMPLE_STORIES });
   }
 }
 
