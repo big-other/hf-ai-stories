@@ -37,7 +37,9 @@ export default function StoryBoard({ refreshKey }: Props) {
     fetchStories();
   }, [fetchStories, refreshKey]);
 
-  const filtered = stories.filter((s) => (filter ? s.category === filter : true));
+  const filtered = stories.filter((s) =>
+    filter ? s.category === filter : true
+  );
 
   const sorted = [...filtered].sort((a, b) => {
     if (sort === "upvotes") return b.upvotes - a.upvotes;
@@ -49,7 +51,7 @@ export default function StoryBoard({ refreshKey }: Props) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
+      <div className="flex justify-center py-20">
         <div className="w-6 h-6 border-2 border-stone/40 border-t-accent rounded-full animate-spin" />
       </div>
     );
@@ -57,15 +59,15 @@ export default function StoryBoard({ refreshKey }: Props) {
 
   return (
     <div>
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Controls — minimal, tucked above the board */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 px-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => setFilter("")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 ${
+            className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
               filter === ""
                 ? "bg-dark-warm text-paper"
-                : "bg-stone/20 text-muted hover:bg-stone/30"
+                : "bg-stone/15 text-muted hover:bg-stone/25"
             }`}
           >
             All
@@ -73,11 +75,11 @@ export default function StoryBoard({ refreshKey }: Props) {
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200 ${
+              onClick={() => setFilter(filter === cat ? "" : cat)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
                 filter === cat
                   ? "bg-dark-warm text-paper"
-                  : "bg-stone/20 text-muted hover:bg-stone/30"
+                  : "bg-stone/15 text-muted hover:bg-stone/25"
               }`}
             >
               {cat}
@@ -88,43 +90,44 @@ export default function StoryBoard({ refreshKey }: Props) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortMode)}
-          className="px-3 py-1.5 text-xs font-medium bg-paper border border-stone/50 rounded-lg text-dark-mid transition-all duration-200 focus:outline-none focus:border-accent/60"
+          className="px-2.5 py-1 text-xs font-medium bg-transparent border border-stone/40 rounded-lg text-muted transition-all duration-200 focus:outline-none focus:border-accent/60"
         >
-          <option value="upvotes">Most upvoted</option>
-          <option value="newest">Newest first</option>
+          <option value="upvotes">Most loved</option>
+          <option value="newest">Newest</option>
         </select>
       </div>
 
-      {/* Stories grid */}
+      {/* The board */}
       {sorted.length === 0 ? (
-        <div className="text-center py-16">
+        <div className="text-center py-20">
           <p className="text-muted text-sm">
             {stories.length === 0
-              ? "No stories yet. Be the first to share yours!"
+              ? "No stories yet. Be the first to share yours."
               : "No stories match this filter."}
           </p>
         </div>
       ) : (
         <>
-          <div className="masonry stagger-children">
-            {visible.map((story) => (
+          <div className="pin-board">
+            {visible.map((story, i) => (
               <StoryCard
                 key={story.id}
                 story={story}
+                index={i}
                 onExpand={setExpandedStory}
               />
             ))}
           </div>
 
           {hasMore && (
-            <div className="flex justify-center mt-8">
+            <div className="flex justify-center mt-6 mb-4">
               <button
                 onClick={() =>
                   setVisibleCount((c) => c + STORIES_PER_PAGE)
                 }
-                className="bg-dark-warm hover:bg-dark-mid text-paper font-medium rounded-lg px-6 py-2.5 text-sm transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+                className="text-sm text-muted hover:text-dark-warm font-medium transition-colors duration-200 underline underline-offset-2 decoration-stone hover:decoration-dark-warm"
               >
-                Load more stories
+                Show more stories
               </button>
             </div>
           )}
