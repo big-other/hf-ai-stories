@@ -94,22 +94,14 @@ body {
 
 .pin-board {
   columns: 1;
-  column-gap: 1.25rem;
+  column-gap: 1.5rem;
   padding: 1.5rem 1rem;
 }
 
 @media (min-width: 640px) {
   .pin-board {
     columns: 2;
-    column-gap: 1.75rem;
-    padding: 2rem 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .pin-board {
-    columns: 3;
-    column-gap: 1.75rem;
+    column-gap: 2rem;
     padding: 2rem 1.5rem;
   }
 }
