@@ -3,15 +3,6 @@
 import { useEffect, useCallback, useState } from "react";
 import { Story } from "@/lib/types";
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Employment: "bg-accent/10 text-accent-dark",
-  "Creative work": "bg-purple-50 text-purple-700",
-  Education: "bg-blue-50 text-blue-700",
-  Healthcare: "bg-rose-50 text-rose-700",
-  Privacy: "bg-amber-50 text-amber-700",
-  Other: "bg-stone/15 text-dark-mid",
-};
-
 interface Props {
   story: Story | null;
   onClose: () => void;
@@ -55,18 +46,14 @@ export default function StoryModal({ story, onClose }: Props) {
     year: "numeric",
   });
 
-  const colorClass =
-    CATEGORY_COLORS[story.category] || CATEGORY_COLORS.Other;
-
   async function handleUpvote() {
     if (hasVoted) return;
 
-    // Optimistic update
     setUpvotes((v) => v + 1);
     setHasVoted(true);
     localStorage.setItem(`voted:${story!.id}`, "true");
     setBouncing(true);
-    setTimeout(() => setBouncing(false), 450);
+    setTimeout(() => setBouncing(false), 500);
 
     try {
       const res = await fetch("/api/upvote", {
@@ -85,87 +72,97 @@ export default function StoryModal({ story, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8"
       onClick={onClose}
     >
-      {/* Backdrop */}
+      {/* Backdrop — softly blurred board behind */}
       <div
-        className="absolute inset-0 bg-dark-warm/30 backdrop-blur-sm"
-        style={{ animation: "fadeInUp 0.2s ease-out both" }}
+        className="absolute inset-0 bg-dark-warm/25 backdrop-blur-md"
+        style={{ animation: "fadeInUp 0.15s ease-out both" }}
       />
 
-      {/* Modal — styled like a pinned card picked up to read */}
+      {/* The "picked up" card */}
       <div
-        className="relative bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto animate-scale-in"
+        className="relative bg-[#FFFEF7] max-w-lg w-full max-h-[85vh] overflow-y-auto animate-scale-in"
         style={{
+          borderRadius: "2px",
           boxShadow:
-            "0 20px 50px -10px rgba(44,35,28,0.2), 0 8px 20px -6px rgba(44,35,28,0.1)",
+            "0 25px 60px -12px rgba(44,35,28,0.25), 0 12px 24px -8px rgba(44,35,28,0.12)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 sm:p-8">
+        {/* Subtle top edge — like a folded card */}
+        <div className="h-1 bg-gradient-to-r from-stone/10 via-stone/20 to-stone/10" />
+
+        <div className="px-7 pt-8 pb-7 sm:px-10 sm:pt-10 sm:pb-8">
           {/* Close */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-stone hover:text-dark-warm hover:bg-stone/15 transition-all duration-200"
+            className="absolute top-5 right-5 w-7 h-7 flex items-center justify-center rounded-full text-stone/60 hover:text-dark-warm hover:bg-stone/10 transition-all duration-200"
             aria-label="Close"
           >
             <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
             >
-              <path d="M2 2l10 10M12 2L2 12" />
+              <path d="M1 1l10 10M11 1L1 11" />
             </svg>
           </button>
 
-          {/* Category & date */}
-          <div className="flex items-center gap-3 mb-5">
-            <span
-              className={`px-2.5 py-0.5 text-[11px] font-semibold rounded-full ${colorClass}`}
-            >
+          {/* Category + date — small, stamped feel */}
+          <div className="flex items-center gap-3 mb-8">
+            <span className="text-[10px] font-bold text-muted/60 uppercase tracking-[0.15em]">
               {story.category}
             </span>
-            <span className="text-[11px] text-muted">{date}</span>
+            <span className="text-[10px] text-stone">&bull;</span>
+            <span className="text-[10px] text-stone">{date}</span>
           </div>
 
-          {/* Opening quote */}
-          <span className="font-serif text-5xl text-stone/40 leading-none select-none block -mb-4">
+          {/* Large opening quote */}
+          <div className="font-serif text-6xl text-stone/25 leading-none select-none -mb-6 -ml-1">
             &ldquo;
-          </span>
+          </div>
 
-          {/* Story text */}
-          <p className="text-[15px] text-dark-warm leading-[1.75] whitespace-pre-line pl-1">
+          {/* Full story */}
+          <div className="font-serif text-xl sm:text-[22px] text-dark-warm leading-relaxed italic whitespace-pre-line">
             {story.text}
-          </p>
+          </div>
 
-          <div className="w-10 h-px bg-stone/40 my-6" />
+          {/* Closing quote */}
+          <div className="font-serif text-6xl text-stone/25 leading-none select-none text-right -mt-4 -mr-1">
+            &rdquo;
+          </div>
 
-          {/* Author & upvote */}
-          <div className="flex items-center justify-between">
+          {/* Divider */}
+          <div className="w-8 h-px bg-stone/30 my-6" />
+
+          {/* Author + upvote */}
+          <div className="flex items-end justify-between">
             <div>
-              <p className="text-sm font-medium text-dark-warm">
+              <p className="text-xs font-semibold text-dark-warm uppercase tracking-wide">
                 {story.name || "Anonymous"}
               </p>
               {story.location && (
-                <p className="text-xs text-muted mt-0.5">{story.location}</p>
+                <p className="text-[11px] text-muted mt-1">{story.location}</p>
               )}
             </div>
+
             <button
               onClick={handleUpvote}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 ${
                 hasVoted
-                  ? "text-danger bg-danger-light/60"
-                  : "text-stone hover:text-danger hover:bg-danger-light/40"
+                  ? "text-danger bg-danger-light/50"
+                  : "text-stone/40 hover:text-danger hover:bg-danger-light/30"
               }`}
             >
               <svg
-                width="15"
-                height="15"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill={hasVoted ? "currentColor" : "none"}
                 stroke="currentColor"
@@ -174,7 +171,7 @@ export default function StoryModal({ story, onClose }: Props) {
               >
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
-              <span className="font-medium tabular-nums">{upvotes}</span>
+              <span className="text-sm font-medium tabular-nums">{upvotes}</span>
             </button>
           </div>
         </div>

@@ -51,7 +51,7 @@ export default function StoryBoard({ refreshKey }: Props) {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
+      <div className="flex justify-center py-24">
         <div className="w-6 h-6 border-2 border-stone/40 border-t-accent rounded-full animate-spin" />
       </div>
     );
@@ -59,56 +59,48 @@ export default function StoryBoard({ refreshKey }: Props) {
 
   return (
     <div>
-      {/* Controls — minimal, tucked above the board */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 px-1">
+      {/* Filters — floating above the board */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setFilter("")}
-            className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
-              filter === ""
-                ? "bg-dark-warm text-paper"
-                : "bg-stone/15 text-muted hover:bg-stone/25"
-            }`}
-          >
-            All
-          </button>
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilter(filter === cat ? "" : cat)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
-                filter === cat
-                  ? "bg-dark-warm text-paper"
-                  : "bg-stone/15 text-muted hover:bg-stone/25"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {[{ label: "All", value: "" }, ...CATEGORIES.map((c) => ({ label: c, value: c }))].map(
+            ({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => setFilter(filter === value ? "" : value)}
+                className={`px-3 py-1 text-[11px] font-medium rounded-full transition-all duration-200 uppercase tracking-wide ${
+                  filter === value
+                    ? "bg-dark-warm text-paper shadow-sm"
+                    : "bg-linen/80 text-muted hover:bg-linen hover:text-dark-mid"
+                }`}
+              >
+                {label}
+              </button>
+            )
+          )}
         </div>
 
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortMode)}
-          className="px-2.5 py-1 text-xs font-medium bg-transparent border border-stone/40 rounded-lg text-muted transition-all duration-200 focus:outline-none focus:border-accent/60"
+          className="px-3 py-1 text-[11px] font-medium bg-linen/80 border-none rounded-full text-muted uppercase tracking-wide cursor-pointer focus:outline-none"
         >
           <option value="upvotes">Most loved</option>
           <option value="newest">Newest</option>
         </select>
       </div>
 
-      {/* The board */}
+      {/* Cork board surface */}
       {sorted.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-muted text-sm">
+        <div className="cork-board text-center py-24">
+          <p className="text-muted text-sm relative z-10">
             {stories.length === 0
               ? "No stories yet. Be the first to share yours."
               : "No stories match this filter."}
           </p>
         </div>
       ) : (
-        <>
-          <div className="pin-board">
+        <div className="cork-board">
+          <div className="pin-board relative z-10">
             {visible.map((story, i) => (
               <StoryCard
                 key={story.id}
@@ -120,18 +112,18 @@ export default function StoryBoard({ refreshKey }: Props) {
           </div>
 
           {hasMore && (
-            <div className="flex justify-center mt-6 mb-4">
+            <div className="flex justify-center pb-6 relative z-10">
               <button
                 onClick={() =>
                   setVisibleCount((c) => c + STORIES_PER_PAGE)
                 }
-                className="text-sm text-muted hover:text-dark-warm font-medium transition-colors duration-200 underline underline-offset-2 decoration-stone hover:decoration-dark-warm"
+                className="text-xs text-muted hover:text-dark-warm font-medium transition-colors duration-200 underline underline-offset-2 decoration-stone/50 hover:decoration-dark-warm"
               >
                 Show more stories
               </button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       <StoryModal

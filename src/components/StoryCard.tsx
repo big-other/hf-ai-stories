@@ -3,25 +3,27 @@
 import { useState, useCallback, useMemo } from "react";
 import { Story } from "@/lib/types";
 
-const CATEGORY_DOT: Record<string, string> = {
-  Employment: "bg-accent",
-  "Creative work": "bg-purple-500",
-  Education: "bg-blue-500",
-  Healthcare: "bg-rose-500",
-  Privacy: "bg-amber-500",
-  Other: "bg-stone",
-};
-
-const PIN_COLORS = [
-  "bg-danger",
-  "bg-accent",
-  "bg-amber-500",
-  "bg-blue-500",
-  "bg-purple-500",
-  "bg-rose-500",
+// Warm-toned paper colors for variety
+const PAPER_COLORS = [
+  "bg-[#FFFEF7]",    // warm white
+  "bg-[#FFF8ED]",    // cream
+  "bg-[#F5F0E8]",    // oatmeal
+  "bg-[#FFF5F5]",    // blush
+  "bg-[#F0F7F4]",    // sage
+  "bg-[#F5F3FF]",    // lavender
+  "bg-[#FFFBEB]",    // butter
+  "bg-[#FFF1E6]",    // peach
 ];
 
-const EXCERPT_LENGTH = 100;
+const TAPE_COLORS = [
+  "bg-[#E8D5B7]",   // kraft
+  "bg-[#B8D4CE]",   // seafoam
+  "bg-[#D4B8B8]",   // dusty rose
+  "bg-[#C5CCE0]",   // periwinkle
+  "bg-[#D6CEB2]",   // sand
+  "bg-[#C2D4B8]",   // moss
+  "bg-[#E0CFC5]",   // nude
+];
 
 interface Props {
   story: Story;
@@ -29,13 +31,49 @@ interface Props {
   onExpand: (story: Story) => void;
 }
 
-function seededRandom(seed: string): number {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash << 5) - hash + seed.charCodeAt(i);
-    hash |= 0;
+// Deterministic pseudo-random from a string seed
+function seed(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
   }
-  return ((hash & 0x7fffffff) % 1000) / 1000;
+  return ((h & 0x7fffffff) % 10000) / 10000;
+}
+
+/**
+ * Extracts the most "impactful" sentence from a story to use as a pull quote.
+ * Prefers sentences with em dashes, strong emotion words, or first-person stakes.
+ */
+function extractPullQuote(text: string): string {
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+  // Score each sentence
+  const scored = sentences.map((s) => {
+    let score = 0;
+    const t = s.toLowerCase();
+    // Emotional / high-impact signals
+    if (t.includes("—")) score += 3;
+    if (/\bi feel\b|\bscares me\b|\bhardest part\b|\bcried\b|\bpowerless\b/.test(t)) score += 4;
+    if (/\bnobody\b|\bno one\b|\bcan't\b|\bwon't\b/.test(t)) score += 2;
+    if (/\blife-changing\b|\bchanged\b|\blost\b|\bgone\b/.test(t)) score += 2;
+    // Prefer mid-length sentences (not too short, not too long)
+    if (s.length > 40 && s.length < 140) score += 2;
+    if (s.length > 20 && s.length < 40) score += 1;
+    // Prefer sentences that aren't the very first (which tend to be setup)
+    if (sentences.indexOf(s) > 0) score += 1;
+    return { sentence: s.trim(), score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0]?.sentence || text.slice(0, 120);
+
+  // Cap at ~120 chars for the card
+  if (best.length > 130) {
+    const cut = best.slice(0, 120);
+    const lastSpace = cut.lastIndexOf(" ");
+    return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut) + "\u2026";
+  }
+  return best;
 }
 
 export default function StoryCard({ story, index, onExpand }: Props) {
@@ -46,34 +84,33 @@ export default function StoryCard({ story, index, onExpand }: Props) {
   });
   const [bouncing, setBouncing] = useState(false);
 
-  // Deterministic "random" values from story id
-  const cardStyle = useMemo(() => {
-    const r = seededRandom(story.id);
-    const rotation = (r - 0.5) * 4; // -2 to +2 degrees
-    const pinColor = PIN_COLORS[Math.floor(seededRandom(story.id + "pin") * PIN_COLORS.length)];
-    const pinOffset = 35 + seededRandom(story.id + "off") * 30; // 35-65% from left
-    return { rotation, pinColor, pinOffset };
+  const cardProps = useMemo(() => {
+    const r1 = seed(story.id);
+    const r2 = seed(story.id + "a");
+    const r3 = seed(story.id + "b");
+    const r4 = seed(story.id + "c");
+
+    return {
+      rotation: (r1 - 0.5) * 5, // -2.5 to +2.5 degrees
+      paperColor: PAPER_COLORS[Math.floor(r2 * PAPER_COLORS.length)],
+      tapeColor: TAPE_COLORS[Math.floor(r3 * TAPE_COLORS.length)],
+      tapeOffset: 25 + r4 * 50, // 25-75% from left
+      tapeRotation: (r1 - 0.5) * 12, // slight tape angle
+    };
   }, [story.id]);
 
-  const excerpt = useMemo(() => {
-    if (story.text.length <= EXCERPT_LENGTH) return story.text;
-    // Cut at last space before limit
-    const cut = story.text.slice(0, EXCERPT_LENGTH);
-    const lastSpace = cut.lastIndexOf(" ");
-    return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut) + "\u2026";
-  }, [story.text]);
+  const pullQuote = useMemo(() => extractPullQuote(story.text), [story.text]);
 
   const handleUpvote = useCallback(
     async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (hasVoted) return;
 
-      // Optimistic update
       setUpvotes((v) => v + 1);
       setHasVoted(true);
       localStorage.setItem(`voted:${story.id}`, "true");
       setBouncing(true);
-      setTimeout(() => setBouncing(false), 450);
+      setTimeout(() => setBouncing(false), 500);
 
       try {
         const res = await fetch("/api/upvote", {
@@ -92,66 +129,57 @@ export default function StoryCard({ story, index, onExpand }: Props) {
     [hasVoted, story.id]
   );
 
-  const dotColor = CATEGORY_DOT[story.category] || CATEGORY_DOT.Other;
-
   return (
     <article
-      className="pin-card bg-white rounded-lg cursor-pointer relative"
+      className={`pin-card ${cardProps.paperColor} rounded-sm cursor-pointer relative overflow-visible`}
       style={{
-        transform: `rotate(${cardStyle.rotation}deg)`,
+        transform: `rotate(${cardProps.rotation}deg)`,
         boxShadow:
-          "0 1px 3px rgba(44,35,28,0.06), 0 4px 12px -2px rgba(44,35,28,0.08)",
-        ["--card-rotate" as string]: `rotate(${cardStyle.rotation}deg)`,
-        animationDelay: `${index * 50}ms`,
+          "0 1px 2px rgba(44,35,28,0.05), 0 4px 16px -4px rgba(44,35,28,0.1)",
+        ["--card-rotate" as string]: `rotate(${cardProps.rotation}deg)`,
+        animationDelay: `${index * 70}ms`,
       }}
       onClick={() => onExpand(story)}
     >
-      {/* Push pin */}
+      {/* Washi tape */}
       <div
-        className="absolute -top-1.5 z-10"
-        style={{ left: `${cardStyle.pinOffset}%` }}
-      >
-        <div
-          className={`w-3.5 h-3.5 rounded-full ${cardStyle.pinColor} shadow-sm`}
-          style={{
-            boxShadow: "0 1px 3px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.3)",
-          }}
-        />
-      </div>
+        className={`washi-tape ${cardProps.tapeColor}`}
+        style={{
+          left: `${cardProps.tapeOffset}%`,
+          transform: `translateX(-50%) rotate(${cardProps.tapeRotation}deg)`,
+        }}
+      />
 
-      <div className="px-5 pt-5 pb-4">
-        {/* Quote mark + excerpt */}
-        <div className="mb-3">
-          <span className="font-serif text-3xl text-stone/60 leading-none select-none">
-            &ldquo;
-          </span>
-          <p className="text-sm text-dark-warm/85 leading-relaxed -mt-3 pl-1 font-light">
-            {excerpt}
+      {/* Content */}
+      <div className="px-5 pt-6 pb-5">
+        {/* Pull quote */}
+        <blockquote className="mb-4">
+          <p className="font-serif text-[17px] sm:text-lg text-dark-warm leading-snug italic">
+            &ldquo;{pullQuote}&rdquo;
           </p>
-        </div>
+        </blockquote>
 
-        {/* Footer: author, category dot, heart */}
-        <div className="flex items-center justify-between pt-2 border-t border-stone/20">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColor}`} />
-            <span className="text-xs text-muted truncate">
+        {/* Author line + heart */}
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-dark-mid tracking-wide uppercase">
               {story.name || "Anonymous"}
-              {story.location ? ` \u00b7 ${story.location}` : ""}
-            </span>
+            </p>
+            {story.location && (
+              <p className="text-[10px] text-muted mt-0.5">{story.location}</p>
+            )}
           </div>
 
           <button
             onClick={handleUpvote}
-            className={`flex items-center gap-1 pl-2 py-0.5 rounded-full text-xs transition-all duration-200 flex-shrink-0 ${
-              hasVoted
-                ? "text-danger"
-                : "text-stone hover:text-danger"
+            className={`flex items-center gap-1 flex-shrink-0 transition-all duration-200 ${
+              hasVoted ? "text-danger" : "text-stone/50 hover:text-danger"
             }`}
             aria-label={hasVoted ? "Already upvoted" : "Upvote this story"}
           >
             <svg
-              width="12"
-              height="12"
+              width="13"
+              height="13"
               viewBox="0 0 24 24"
               fill={hasVoted ? "currentColor" : "none"}
               stroke="currentColor"
@@ -160,9 +188,17 @@ export default function StoryCard({ story, index, onExpand }: Props) {
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
-            <span className="font-medium tabular-nums">{upvotes}</span>
+            <span className="text-[11px] font-medium tabular-nums">{upvotes}</span>
           </button>
         </div>
+      </div>
+
+      {/* Category stamp — faint, rotated in corner */}
+      <div
+        className="stamp font-sans text-dark-warm"
+        style={{ transform: `rotate(-${6 + seed(story.id + "stamp") * 8}deg)` }}
+      >
+        {story.category}
       </div>
     </article>
   );
