@@ -77,3 +77,12 @@ export async function upvoteStory(id: string): Promise<number | null> {
   await redis.set(`${STORY_PREFIX}${id}`, JSON.stringify(story));
   return story.upvotes;
 }
+
+export async function downvoteStory(id: string): Promise<number | null> {
+  const redis = getRedis();
+  const story = await getStory(id);
+  if (!story || !story.approved) return null;
+  story.upvotes = Math.max(0, story.upvotes - 1);
+  await redis.set(`${STORY_PREFIX}${id}`, JSON.stringify(story));
+  return story.upvotes;
+}

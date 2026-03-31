@@ -47,26 +47,47 @@ export default function StoryModal({ story, onClose }: Props) {
   });
 
   async function handleUpvote() {
-    if (hasVoted) return;
-
-    setUpvotes((v) => v + 1);
-    setHasVoted(true);
-    localStorage.setItem(`voted:${story!.id}`, "true");
     setBouncing(true);
     setTimeout(() => setBouncing(false), 500);
 
-    try {
-      const res = await fetch("/api/upvote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: story!.id }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUpvotes(data.upvotes);
+    if (hasVoted) {
+      // Un-vote
+      setUpvotes((v) => Math.max(0, v - 1));
+      setHasVoted(false);
+      localStorage.removeItem(`voted:${story!.id}`);
+
+      try {
+        const res = await fetch("/api/upvote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: story!.id, action: "remove" }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUpvotes(data.upvotes);
+        }
+      } catch {
+        // Optimistic update stands
       }
-    } catch {
-      // Optimistic update stands
+    } else {
+      // Vote
+      setUpvotes((v) => v + 1);
+      setHasVoted(true);
+      localStorage.setItem(`voted:${story!.id}`, "true");
+
+      try {
+        const res = await fetch("/api/upvote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: story!.id }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUpvotes(data.upvotes);
+        }
+      } catch {
+        // Optimistic update stands
+      }
     }
   }
 

@@ -104,26 +104,47 @@ export default function StoryCard({ story, index, onExpand }: Props) {
   const handleUpvote = useCallback(
     async (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (hasVoted) return;
-
-      setUpvotes((v) => v + 1);
-      setHasVoted(true);
-      localStorage.setItem(`voted:${story.id}`, "true");
       setBouncing(true);
       setTimeout(() => setBouncing(false), 500);
 
-      try {
-        const res = await fetch("/api/upvote", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: story.id }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUpvotes(data.upvotes);
+      if (hasVoted) {
+        // Un-vote
+        setUpvotes((v) => Math.max(0, v - 1));
+        setHasVoted(false);
+        localStorage.removeItem(`voted:${story.id}`);
+
+        try {
+          const res = await fetch("/api/upvote", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: story.id, action: "remove" }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUpvotes(data.upvotes);
+          }
+        } catch {
+          // Optimistic update stands
         }
-      } catch {
-        // Optimistic update stands
+      } else {
+        // Vote
+        setUpvotes((v) => v + 1);
+        setHasVoted(true);
+        localStorage.setItem(`voted:${story.id}`, "true");
+
+        try {
+          const res = await fetch("/api/upvote", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: story.id }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUpvotes(data.upvotes);
+          }
+        } catch {
+          // Optimistic update stands
+        }
       }
     },
     [hasVoted, story.id]
@@ -151,10 +172,10 @@ export default function StoryCard({ story, index, onExpand }: Props) {
       />
 
       {/* Content */}
-      <div className="px-5 pt-6 pb-5">
+      <div className="px-6 pt-7 pb-8">
         {/* Pull quote */}
-        <blockquote className="mb-4">
-          <p className="font-serif text-[17px] sm:text-lg text-dark-warm leading-snug italic">
+        <blockquote className="mb-5">
+          <p className="font-serif text-lg sm:text-xl text-dark-warm leading-snug italic">
             &ldquo;{pullQuote}&rdquo;
           </p>
         </blockquote>
@@ -162,11 +183,11 @@ export default function StoryCard({ story, index, onExpand }: Props) {
         {/* Author line + heart */}
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-medium text-dark-mid tracking-wide uppercase">
+            <p className="text-xs font-medium text-dark-mid tracking-wide uppercase">
               {story.name || "Anonymous"}
             </p>
             {story.location && (
-              <p className="text-[10px] text-muted mt-0.5">{story.location}</p>
+              <p className="text-[11px] text-muted mt-0.5">{story.location}</p>
             )}
           </div>
 
@@ -175,11 +196,11 @@ export default function StoryCard({ story, index, onExpand }: Props) {
             className={`flex items-center gap-1 flex-shrink-0 transition-all duration-200 ${
               hasVoted ? "text-danger" : "text-stone/50 hover:text-danger"
             }`}
-            aria-label={hasVoted ? "Already upvoted" : "Upvote this story"}
+            aria-label={hasVoted ? "Remove upvote" : "Upvote this story"}
           >
             <svg
-              width="13"
-              height="13"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill={hasVoted ? "currentColor" : "none"}
               stroke="currentColor"
@@ -188,16 +209,13 @@ export default function StoryCard({ story, index, onExpand }: Props) {
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
-            <span className="text-[11px] font-medium tabular-nums">{upvotes}</span>
+            <span className="text-xs font-medium tabular-nums">{upvotes}</span>
           </button>
         </div>
       </div>
 
-      {/* Category stamp — faint, rotated in corner */}
-      <div
-        className="stamp font-sans text-dark-warm"
-        style={{ transform: `rotate(-${6 + seed(story.id + "stamp") * 8}deg)` }}
-      >
+      {/* Category stamp — faint, centered at bottom */}
+      <div className="stamp font-sans text-dark-warm">
         {story.category}
       </div>
     </article>
